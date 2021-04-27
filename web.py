@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, render_template
 
 import mysql.connector
 
@@ -27,6 +27,5 @@ def list_all_scores():
     return {"scores": result}
 
 
-cursor = db.cursor()
 if __name__ == "__main__":
     app.run(debug=True)
