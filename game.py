@@ -4,7 +4,36 @@ import pygame
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 from os import path, remove
+
+import mysql.connector
 # import requests
+
+temp_db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="MyNewPassword"
+)
+
+temp_cursor = temp_db.cursor()
+
+temp_cursor.execute("CREATE DATABASE IF NOT EXISTS snakegame")
+temp_db.commit()
+temp_db.close()
+
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="MyNewPassword",
+    database="snakegame",
+    auth_plugin="mysql_native_password"
+)
+
+cursor = db.cursor()
+
+cursor.execute(
+    "CREATE TABLE IF NOT EXISTS scores (player VARCHAR(25), score INT, difficulty VARCHAR(15))")
+db.commit()
+db.close()
 
 
 class Game():
@@ -36,43 +65,45 @@ class Game():
         # Global Variables
         self.screen = "menu"
         self.restart = True
-        self.target_url = "http://localhost:1337"
+        # self.target_url = "http://localhost:1337"
         self.difficulty = ""
         self.score = 0
         self.hunger = 0  # time since last meal
 
     def upload(self):
+        pass
 
-        if path.exists("db.txt"):  # FIXME
-            file = open("db.txt", "r")
-            csvlist = file.readlines()
-            print(csvlist)
-            if csvlist != []:
-                for person in csvlist[:-1]:
-                    data = {}
-                    data["player"] = person.split(",")[0]
-                    data["score"] = int(
-                        "".join(list(person.split(",")[1])[:-1]))
-                    data["difficulty"] = person.split(",")[2][:-1].capitalize()
-                    # response = requests.post(
-                    #     self.target_url + "/Player/AddScore", data=data)
-                    # print(response.text)
-                data = {}
-                data["player"] = csvlist[-1].split(",")[0]
-                data["score"] = int(csvlist[-1].split(",")[1])
-                # data["difficulty"] = self.difficulty.capitalize()
-                # response = requests.post(
-                #     self.target_url + "/Player/AddScore", data=data)
-                # print(response)
-                messagebox.showinfo("Success!", f"Scores have been uploaded")
-                file.close()
-                remove("db.txt")
-            else:
-                messagebox.showinfo("FAILURE!", f"No new Scores")
-                return ""
-        else:
-            messagebox.showinfo("FAILURE!", f"No new Scores")
-            return ""
+    # def upload(self):
+    #     if path.exists("db.txt"):
+    #         file = open("db.txt", "r")
+    #         csvlist = file.readlines()
+    #         print(csvlist)
+    #         if csvlist != []:
+    #             for person in csvlist[:-1]:
+    #                 data = {}
+    #                 data["player"] = person.split(",")[0]
+    #                 data["score"] = int(
+    #                     "".join(list(person.split(",")[1])[:-1]))
+    #                 data["difficulty"] = person.split(",")[2][:-1].capitalize()
+    #                 # response = requests.post(
+    #                 #     self.target_url + "/Player/AddScore", data=data)
+    #                 # print(response.text)
+    #             data = {}
+    #             data["player"] = csvlist[-1].split(",")[0]
+    #             data["score"] = int(csvlist[-1].split(",")[1])
+    #             # data["difficulty"] = self.difficulty.capitalize()
+    #             # response = requests.post(
+    #             #     self.target_url + "/Player/AddScore", data=data)
+    #             # print(response)
+    #             messagebox.showinfo("Success!", f"Scores have been uploaded")
+    #             file.close()
+    #             remove("db.txt")
+    #         else:
+    #             messagebox.showinfo("FAILURE!", f"No new Scores")
+    #             return ""
+    #     else:
+    #         messagebox.showinfo("FAILURE!", f"No new Scores")
+    #         return ""
 
     def button(self, msg, x, y, w, h, color, click_color, text_color, font, action=None):
         mouse = pygame.mouse.get_pos()
@@ -89,46 +120,39 @@ class Game():
         self.DISPLAY.blit(text, text_rect)
 
     def record_score(self, name, score):
-        if path.exists("db.txt"):
-            file = open("db.txt", "r")
-            csvlist = file.readlines()
-
-            for line in csvlist:
-                item = line.split(",")
-                self.scores[item[0]] = item[1]
-            if name in self.scores:
-                if int(self.scores[name]) >= int(score):
-                    file.close()
-                    return False
-                else:
-                    file.close()
-                    self.scores[name] = self.score
-                    file = open("db.txt", "w")
-                    for key in self.scores:
-                        file.write(
-                            f"\n{key},{int(self.scores[key])},{self.difficulty}")
-                    csvlist.pop(0)
-                    file.close()
-                    return True
-            else:
-                file.close()
-                file = open("db.txt", "a")
-                file.write(f"\n{name},{int(score)},{self.difficulty}")
-                file.close()
-                return True
+        db = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            passwd="MyNewPassword",
+            database="snakegame",
+            auth_plugin="mysql_native_password"
+        )
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM scores WHERE player = %s", (name,))
+        result = cursor.fetchone()
+        if result == None:
+            cursor.execute(
+                "INSERT INTO scores (player, score, difficulty) VALUES (%s, %s, %s)", (name, score, self.difficulty,))
+            messagebox.showinfo(
+                "Success", f"Score of {int(self.score)} recorded for player {name}!")
         else:
-            file = open("db.txt", "w")
-            file.write(f"{name},{int(score)},{self.difficulty}")
-            file.close()
-            return True
+            db_score = result[1]
+            if db_score <= score:
+                cursor.execute(
+                    "UPDATE scores SET score = %s, difficulty = %s WHERE player = %s", (score, self.difficulty, name))
+            else:
+                messagebox.showinfo(
+                    "Failure", f"{name} already has a higher score than {int(self.score)}.")
+        db.commit()
+        db.close()
+        return True
 
     def menu_action(self):
         self.screen = "menu"
 
     def record_action(self):
-
-        name = simpledialog.askstring(title="Test",
-                                      prompt="What's your Name?:")
+        name = simpledialog.askstring(title="Record Score",
+                                      prompt="Please enter your player name:")
         if name is not None:
             if name != '':
                 try:
@@ -137,21 +161,14 @@ class Game():
                         "Invalid.", "The name you entered is invalid.")
                 except ValueError:
                     if self.record_score(name, self.score):
-                        messagebox.showinfo(
-                            "Success", f"Score of {int(self.score)} recorded for player {name}!")
                         self.screen = "menu"
                         return "success"
-                    else:
-                        messagebox.showinfo(
-                            "Failure", f"{name} already has a higher score than {int(self.score)}.")
             else:
-
                 messagebox.showinfo(
                     "Invalid.", "The name you entered is invalid.")
         return "menu"
 
     def calculate_score(self, ate=False):
-
         multiplier = 0
         if self.difficulty == "easy":
             multiplier = 1
