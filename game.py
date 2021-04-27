@@ -92,17 +92,19 @@ class Game():
         cursor = db.cursor()
         cursor.execute("SELECT * FROM scores WHERE player = %s", (name,))
         result = cursor.fetchone()
+
+        # if player does not exist in database, save record to database
         if result == None:
             cursor.execute(
                 "INSERT INTO scores (player, score, difficulty) VALUES (%s, %s, %s)", (name, score, self.difficulty,))
             messagebox.showinfo(
                 "Success", f"Score of {int(self.score)} recorded for player {name}!")
-        else:
+        else:  # if player exists in database and new score is higher than the score in database, update score
             db_score = result[1]
             if db_score <= score:
                 cursor.execute(
                     "UPDATE scores SET score = %s, difficulty = %s WHERE player = %s", (score, self.difficulty, name))
-            else:
+            else:  # pop up message when player exists in database and new score lower than the score in database
                 messagebox.showinfo(
                     "Failure", f"{name} already has a higher score than {int(self.score)}.")
         db.commit()
