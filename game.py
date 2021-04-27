@@ -3,10 +3,8 @@ from food import Food
 import pygame
 import tkinter as tk
 from tkinter import simpledialog, messagebox
-from os import path, remove
 
 import mysql.connector
-# import requests
 
 temp_db = mysql.connector.connect(
     host="localhost",
@@ -65,45 +63,9 @@ class Game():
         # Global Variables
         self.screen = "menu"
         self.restart = True
-        # self.target_url = "http://localhost:1337"
         self.difficulty = ""
         self.score = 0
         self.hunger = 0  # time since last meal
-
-    def upload(self):
-        pass
-
-    # def upload(self):
-    #     if path.exists("db.txt"):
-    #         file = open("db.txt", "r")
-    #         csvlist = file.readlines()
-    #         print(csvlist)
-    #         if csvlist != []:
-    #             for person in csvlist[:-1]:
-    #                 data = {}
-    #                 data["player"] = person.split(",")[0]
-    #                 data["score"] = int(
-    #                     "".join(list(person.split(",")[1])[:-1]))
-    #                 data["difficulty"] = person.split(",")[2][:-1].capitalize()
-    #                 # response = requests.post(
-    #                 #     self.target_url + "/Player/AddScore", data=data)
-    #                 # print(response.text)
-    #             data = {}
-    #             data["player"] = csvlist[-1].split(",")[0]
-    #             data["score"] = int(csvlist[-1].split(",")[1])
-    #             # data["difficulty"] = self.difficulty.capitalize()
-    #             # response = requests.post(
-    #             #     self.target_url + "/Player/AddScore", data=data)
-    #             # print(response)
-    #             messagebox.showinfo("Success!", f"Scores have been uploaded")
-    #             file.close()
-    #             remove("db.txt")
-    #         else:
-    #             messagebox.showinfo("FAILURE!", f"No new Scores")
-    #             return ""
-    #     else:
-    #         messagebox.showinfo("FAILURE!", f"No new Scores")
-    #         return ""
 
     def button(self, msg, x, y, w, h, color, click_color, text_color, font, action=None):
         mouse = pygame.mouse.get_pos()
@@ -292,15 +254,10 @@ class Game():
                                         self.menu_buttons, self.medium_action)
                 response3 = self.button("HARD!", 345, 150, 100, 35, [70, 102, 255], [90, 120, 255], [255, 255, 255],
                                         self.menu_buttons, self.hard_action)
-                if path.exists("db.txt"):
-                    self.button("Upload Scores", 184, 250, 150, 35, [70, 102, 255], [90, 120, 255], [255, 255, 255],
-                                self.menu_buttons,
-                                self.upload)
                 if response == "game":  # simple menu system
                     self.screen = "game"
                 pygame.display.flip()
 
-                # idk why but with out the code at the bottom, it crashes
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
