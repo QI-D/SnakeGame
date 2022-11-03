@@ -12,7 +12,7 @@ Player can record and upload score to the leaderboard.
 
 ### Built With
 
-Frameworks and libraries we used to build our project.
+Frameworks and libraries we used to build the project.
 
 - [Python](https://www.python.org)
 - [Pygame](https://www.pygame.org)
